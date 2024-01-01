@@ -1,3 +1,6 @@
+# The cake is not a lie!
+# ======================
+
 # Commander Lambda has had an incredibly successful week: the first test of the LAMBCHOP doomsday
 # device was completed AND Lambda set a new personal high score in Tetris. To celebrate, the
 # Commander ordered cake for everyone -- even the lowliest of minions! But competition among minions
