@@ -27,16 +27,13 @@ import unittest
 def solution(map):
 
     # define the state as (i, j, 0/1), where the third element indicates whether a wall is removed
-    # we start from (0, 0, 0) and end at (I - 1, J - 1, 0/1)
+    # we start from (0, 0, 0)
+    # we know that removing a wall will always make the path shorter  -- !
+    # so we end at (I - 1, J - 1, 1) 
     I = len(map)
     J = len(map[0])
 
-    l0 = solve_path((0, 0, 0), (I - 1, J - 1, 0), map)
-    if l0 == I + J - 1:
-        return l0
-    else:
-        l1 = solve_path((0, 0, 0), (I - 1, J - 1, 1), map)
-        return min(l0, l1)
+    return solve_path((0, 0, 0), (I - 1, J - 1, 1), map)
 
 def solve_path(start, end, map):
 
@@ -67,13 +64,13 @@ def solve_path(start, end, map):
                     open_set.add(child)
           
     # find the shortest path, just for visualization
-    path = []
-    tmp = end
-    while tmp != None:
-        path.append(tmp)
-        tmp = parent[tmp[0]][tmp[1]][tmp[2]]
-    path = path[::-1]
-    print(path)
+    # path = []
+    # tmp = end
+    # while tmp != None:
+    #     path.append(tmp)
+    #     tmp = parent[tmp[0]][tmp[1]][tmp[2]]
+    # path = path[::-1]
+    # print(path)
 
     return cost[end[0]][end[1]][end[2]] + 1
 
