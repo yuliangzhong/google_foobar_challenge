@@ -22,76 +22,131 @@
 # though you may or may not need to remove a wall. The height and width of the map can be from 2 to
 # 20. Moves can only be made in cardinal directions; no diagonal moves are allowed.
 
-map1 = [[0, 0, 0, 0, 0, 0], \
-        [1, 1, 1, 1, 1, 0], \
-        [0, 0, 0, 0, 0, 0], \
-        [0, 1, 1, 1, 1, 1], \
-        [0, 1, 1, 1, 1, 1], \
-        [0, 0, 0, 0, 0, 0]]
-
-map2 = [[0, 1, 1, 0], \
-        [0, 0, 0, 1], \
-        [1, 1, 0, 0], \
-        [1, 1, 1, 0]]
-
-map3 = [[0, 1, 1, 0], \
-        [0, 0, 1, 1], \
-        [1, 1, 0, 0]]
+import unittest
 
 def solution(map):
+
+    # define the state as (i, j, 0/1), where the third element indicates whether a wall is removed
+    # we start from (0, 0, 0) and end at (I - 1, J - 1, 0/1)
+    I = len(map)
+    J = len(map[0])
+
+    l0 = solve_path((0, 0, 0), (I - 1, J - 1, 0), map)
+    if l0 == I + J - 1:
+        return l0
+    else:
+        l1 = solve_path((0, 0, 0), (I - 1, J - 1, 1), map)
+        return min(l0, l1)
+
+def solve_path(start, end, map):
 
     I = len(map)
     J = len(map[0])
 
-    # initialize the distance matrix
-    dist = [[float("inf") for j in range(J)] for i in range(I)]
-    dist[0][0] = 0
+    # initialize the cost matrix
+    cost = [[[float("inf"), float("inf")] for j in range(J)] for i in range(I)]
+    cost[start[0]][start[1]][0] = 0
 
     # initialize the parent matrix
-    parent = [[None for j in range(J)] for i in range(I)]
+    parent = [[[None for k in range(2)] for j in range(J)] for i in range(I)]
 
     # initialize the open set
-    open_set = {(0, 0)}
+    open_set = {start}
 
     # use Label Correcting Algorithm to find the shortest path
     while open_set:
         node_i = open_set.pop()
-        for child in find_all_children(node_i, I, J, map):
-            d = dist[node_i[0]][node_i[1]] + 1
+        for child in find_all_children(node_i, map):
+            d = cost[node_i[0]][node_i[1]][node_i[2]] + 1
             
-            if d < dist[child[0]][child[1]] and d < dist[I - 1][J - 1]:
-                dist[child[0]][child[1]] = d
-                parent[child[0]][child[1]] = node_i
+            if d < cost[child[0]][child[1]][child[2]] and d < cost[end[0]][end[1]][end[2]]:
+                cost[child[0]][child[1]][child[2]] = d
+                parent[child[0]][child[1]][child[2]] = node_i
 
-                if child != (I - 1, J - 1):
+                if child != end:
                     open_set.add(child)
           
-    # find the shortest path
+    # find the shortest path, just for visualization
     path = []
-    tmp = (I - 1, J - 1)
+    tmp = end
     while tmp != None:
         path.append(tmp)
-        tmp = parent[tmp[0]][tmp[1]]
+        tmp = parent[tmp[0]][tmp[1]][tmp[2]]
     path = path[::-1]
+    print(path)
+
+    return cost[end[0]][end[1]][end[2]] + 1
+
     
-    # if the path length is aleady the shortest, return the path length
-    if len(path) == I + J - 1:
-        return len(path)
-    else:
-        return "not the shortest path, remove a wall?"
-    
-def find_all_children(node, I, J, map):
-    # find the children of the node
+def find_all_children(node, map):
+    I = len(map)
+    J = len(map[0])
     children = []
-    if node[0] >= 1 and map[node[0] - 1][node[1]] == 0:
-        children.append((node[0] - 1, node[1]))
-    if node[0] <= I - 2 and map[node[0] + 1][node[1]] == 0:
-        children.append((node[0] + 1, node[1]))
-    if node[1] >= 1 and map[node[0]][node[1] - 1] == 0:
-        children.append((node[0], node[1] - 1))
-    if node[1] <= J - 2 and map[node[0]][node[1] + 1] == 0:
-        children.append((node[0], node[1] + 1))
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
+
+    for di, dj in directions:
+        ni, nj = node[0] + di, node[1] + dj  # new i and j
+        # Check boundaries
+        if 0 <= ni < I and 0 <= nj < J:
+            if node[2] == 1:  # Already removed a wall
+                if map[ni][nj] == 0:
+                    children.append((ni, nj, 1))
+            else:  # Hasn't removed a wall yet
+                if map[ni][nj] == 0:
+                    children.append((ni, nj, 0))
+                else:
+                    children.append((ni, nj, 1))
     return children
 
-print(solution(map1))
-print(solution(map2))
+
+class Testing(unittest.TestCase):
+
+    map1 = [[0, 0, 0, 0, 0, 0], \
+            [1, 1, 1, 1, 1, 0], \
+            [0, 0, 0, 0, 0, 0], \
+            [0, 1, 1, 1, 1, 1], \
+            [0, 1, 1, 1, 1, 1], \
+            [0, 0, 0, 0, 0, 0]]
+
+    map2 = [[0, 1, 1, 0], \
+            [0, 0, 0, 1], \
+            [1, 1, 0, 0], \
+            [1, 1, 1, 0]]
+
+    map3 = [[0, 1, 1, 0], \
+            [0, 0, 1, 1], \
+            [1, 1, 0, 0]]
+    
+    map4 = [[0, 0, 0, 0, 0, 1, 0, 0], \
+            [1, 1, 1, 1, 0, 1, 1, 0], \
+            [1, 0, 0, 0, 0, 1, 1, 0], \
+            [0, 0, 1, 1, 1, 1, 1, 0], \
+            [0, 1, 1, 1, 1, 1, 1, 0], \
+            [0, 0, 0, 0, 0, 0, 0, 0]]
+    
+    
+    def test_find_all_children(self):
+        self.assertEqual(set(find_all_children((0, 0, 0), self.map1)), set([(1, 0, 1), (0, 1, 0)]))
+        self.assertEqual(set(find_all_children((2, 1, 0), self.map1)), set([(1, 1, 1), (2, 0, 0), (2, 2, 0), (3, 1, 1)]))
+        self.assertEqual(set(find_all_children((1, 1, 1), self.map1)), set([(0, 1, 1), (2, 1, 1)]))
+        self.assertEqual(set(find_all_children((2, 1, 1), self.map1)), set([(2, 0, 1), (2, 2, 1)]))
+    
+    def test_solvePath(self):
+        self.assertEqual(solve_path((0, 0, 0), (5, 5, 0), self.map1), 21)
+        self.assertEqual(solve_path((0, 0, 0), (3, 3, 0), self.map2), 7)
+        self.assertEqual(solve_path((0, 0, 0), (2, 3, 0), self.map3), float("inf"))
+        self.assertEqual(solve_path((0, 0, 0), (5, 7, 0), self.map4), 21)
+
+        self.assertEqual(solve_path((0, 0, 0), (5, 5, 1), self.map1), 11)
+        self.assertEqual(solve_path((0, 0, 0), (3, 3, 1), self.map2), 7)
+        self.assertEqual(solve_path((0, 0, 0), (2, 3, 1), self.map3), 6)
+        self.assertEqual(solve_path((0, 0, 0), (5, 7, 1), self.map4), 13)
+    
+    def test_solution(self):
+        self.assertEqual(solution(self.map1), 11)
+        self.assertEqual(solution(self.map2), 7)
+        self.assertEqual(solution(self.map3), 6)
+        self.assertEqual(solution(self.map4), 13)
+
+if __name__ == "__main__":
+    unittest.main()
