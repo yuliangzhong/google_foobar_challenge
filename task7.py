@@ -30,13 +30,47 @@
 # bounces off the left wall and then the bottom wall before hitting the elite trainer with a total
 # shot distance of sqrt(13), and the shot at bearing [1, 2] bounces off just the top wall before
 # hitting the elite trainer with a total shot distance of sqrt(5).
+from math import gcd
 signs = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
 
 def solution(dimensions, your_position, trainer_position, distance):
-    # use 'mirrors' to help me find all possible directions!
-    # mirror once in the left wall, once in the bottom wall
-    # then we get a pattern that replicates ... forever
-    pass
+    targets, yimgs, _ = iterate_points_in_circle(dimensions, your_position, trainer_position, distance)
+    return len(filtering(targets, yimgs, your_position))
+
+def cartesian_to_polar(pos):
+    g = gcd(abs(pos[0]), abs(pos[1]))
+    return pos[0] // g, pos[1] // g, g
+
+def update_dict(dictionary, dx, dy):
+    rx, ry, g = cartesian_to_polar((dx, dy))
+    dictionary[(rx, ry)] = min(g, dictionary.get((rx, ry), float("inf")))
+
+def iterate_points_in_circle(dimensions, your_position, trainer_position, distance):
+    targets, yimgs = {}, {}
+    centers = []
+    min_x, min_y = your_position[0] - distance - dimensions[0], your_position[1] - distance - dimensions[1]
+    max_x, max_y = your_position[0] + distance + dimensions[0], your_position[1] + distance + dimensions[1]
+    for x in range(min_x + 1, max_x):
+        for y in range(min_y + 1, max_y):
+            if not (x % (2 * dimensions[0]) or y % (2 * dimensions[1])): # if (x, y) is the center of a pattern
+                centers.append((x, y))
+                for sign in signs:
+                    img_x, img_y = x + sign[0] * your_position[0], y + sign[1] * your_position[1]
+                    targ_x, targ_y = x + sign[0] * trainer_position[0], y + sign[1] * trainer_position[1]
+                    di_x, di_y = img_x - your_position[0], img_y - your_position[1]
+                    dt_x, dt_y = targ_x - your_position[0], targ_y - your_position[1]
+                    if (0 < di_x ** 2 + di_y ** 2 <= distance ** 2):
+                        update_dict(yimgs, di_x, di_y)
+                    if (0 < dt_x ** 2 + dt_y ** 2 <= distance ** 2):
+                        update_dict(targets, dt_x, dt_y)
+    return targets, yimgs, centers
+
+def filtering(targets, yimgs, your_position):
+    return [
+        (target_key[0] * target_value + your_position[0], target_key[1] * target_value + your_position[1])
+        for target_key, target_value in targets.items()
+        if target_value < yimgs.get(target_key, float('inf'))
+    ]
 
 # ----------------------------------------------------------------
 # The code below is a visulization helper. 
@@ -59,58 +93,48 @@ def plot_pattern(center, dim, ypos, tpos):
         plt.scatter(*(center + sign * ypos), color='green', s=6)
         plt.scatter(*(center + sign * tpos), color='red', s=6)
 
-def gcd(a, b):
-    if a == 0:
-        return b
-    return gcd(b % a, a)
+def plot_solution(dimensions, your_position, trainer_position, distance):
+    dim, ypos, tpos = map(np.array, (dimensions, your_position, trainer_position))
+    targets, yimgs, centers = iterate_points_in_circle(dim, ypos, tpos, distance)
+    sol = filtering(targets, yimgs, ypos)
 
-def xy_to_rad(pos):
-    g = gcd(abs(pos[0]), abs(pos[1]))
-    return (pos[0] // g, pos[1] // g, g)
+    for center in centers:
+        plot_pattern(np.array(center), dim, ypos, tpos)
+    for point in sol:
+        plt.plot([ypos[0], point[0]], [ypos[1], point[1]], color='purple', linewidth=0.5)
 
-def iterate_points_in_circle(dim, ypos, tpos, dist):
-    targets, yimgs, centers = [], [], []
-    min_pos = ypos - dist - dim
-    max_pos = ypos + dist + dim
-    for x in range(min_pos[0], max_pos[0] + 1):
-        for y in range(min_pos[1], max_pos[1] + 1):
-            pos = np.array([x, y])
-            if not (pos % (2 * dim)).any(): # if (x, y) is the center of a pattern
-                centers.append(pos)
-                for sign in signs:
-                    yimg = pos + sign * ypos
-                    timg = pos + sign * tpos
-                    if np.linalg.norm(yimg - ypos) <= dist:
-                        yimgs.append(yimg)
-                    if np.linalg.norm(timg - ypos) <= dist:
-                        targets.append(timg)    
-    return targets, yimgs, centers
+    # plot room
+    plot_rectangle([0, 0], dimensions, "-", linewidth=1.5)
+    plt.scatter(*your_position, color='green')
+    plt.scatter(*trainer_position, color='red')
+    # plot range
+    plt.gca().add_patch(patches.Circle(your_position, distance, fill=False))
 
-def filtering(targets, yimgs, ypos):
-    pass
+    plt.axis('equal')
+    plt.axis('off')
+    plt.show()
 
 # ----------------------------------------------------------------
 # test code
 # ----------------------------------------------------------------
-dimensions = [4, 3]
-your_position = [1, 1]
-trainer_position = [2, 2]
-distance = 12
+import unittest
 
-dim, ypos, tpos = map(np.array, (dimensions, your_position, trainer_position))
-targets, _, centers = iterate_points_in_circle(dim, ypos, tpos, distance)
-for center in centers:
-    plot_pattern(center, dim, ypos, tpos)
-for target in targets:
-    plt.plot([ypos[0], target[0]], [ypos[1], target[1]], color='purple', linewidth=0.5)
+class TestSolution(unittest.TestCase):
 
-# plot room
-plot_rectangle([0, 0], dimensions, "-", linewidth=1.5)
-plt.scatter(*your_position, color='green')
-plt.scatter(*trainer_position, color='red')
-# plot range
-plt.gca().add_patch(patches.Circle(your_position, distance, fill=False))
+    def test1(self):
+        dimensions = [3, 2]
+        your_position = [1, 1]
+        trainer_position = [2, 1]
+        distance = 4
+        self.assertEqual(solution(dimensions, your_position, trainer_position, distance), 7)
+    
+    def test2(self):
+        dimensions = [300, 275]
+        your_position = [150, 150]
+        trainer_position = [185, 100]
+        distance = 500
+        plot_solution(dimensions, your_position, trainer_position, distance)
+        self.assertEqual(solution(dimensions, your_position, trainer_position, distance), 9)
 
-plt.axis('equal')
-plt.axis('off')
-plt.show()
+if __name__ == '__main__':
+    unittest.main()
