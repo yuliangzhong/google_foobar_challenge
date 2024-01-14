@@ -30,18 +30,24 @@
 # bounces off the left wall and then the bottom wall before hitting the elite trainer with a total
 # shot distance of sqrt(13), and the shot at bearing [1, 2] bounces off just the top wall before
 # hitting the elite trainer with a total shot distance of sqrt(5).
-from math import gcd
-signs = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
 
 def solution(dimensions, your_position, trainer_position, distance):
     targets, yimgs, _ = iterate_points_in_circle(dimensions, your_position, trainer_position, distance)
     return len(filtering(targets, yimgs, your_position))
 
+def gcd(a, b):
+    if a == 0:
+        return b
+    return gcd(b % a, a)
+
+# pos should not be all zeros
 def cartesian_to_polar(pos):
     g = gcd(abs(pos[0]), abs(pos[1]))
     return pos[0] // g, pos[1] // g, g
 
 def update_dict(dictionary, dx, dy):
+    if dx == 0 and dy == 0:
+        return
     rx, ry, g = cartesian_to_polar((dx, dy))
     dictionary[(rx, ry)] = min(g, dictionary.get((rx, ry), float("inf")))
 
@@ -50,11 +56,11 @@ def iterate_points_in_circle(dimensions, your_position, trainer_position, distan
     centers = []
     min_x, min_y = your_position[0] - distance - dimensions[0], your_position[1] - distance - dimensions[1]
     max_x, max_y = your_position[0] + distance + dimensions[0], your_position[1] + distance + dimensions[1]
-    for x in range(min_x + 1, max_x):
-        for y in range(min_y + 1, max_y):
+    for x in range(min_x, max_x + 1):
+        for y in range(min_y, max_y + 1):
             if not (x % (2 * dimensions[0]) or y % (2 * dimensions[1])): # if (x, y) is the center of a pattern
                 centers.append((x, y))
-                for sign in signs:
+                for sign in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
                     img_x, img_y = x + sign[0] * your_position[0], y + sign[1] * your_position[1]
                     targ_x, targ_y = x + sign[0] * trainer_position[0], y + sign[1] * trainer_position[1]
                     di_x, di_y = img_x - your_position[0], img_y - your_position[1]
@@ -89,7 +95,7 @@ def plot_pattern(center, dim, ypos, tpos):
     offsets = [dim, -dim, np.array([dim[0], -dim[1]]), np.array([-dim[0], dim[1]])]
     for offset in offsets:
         plot_rectangle(center, center + offset, style='--', color='black')
-    for sign in signs:
+    for sign in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
         plt.scatter(*(center + sign * ypos), color='green', s=6)
         plt.scatter(*(center + sign * tpos), color='red', s=6)
 
@@ -121,6 +127,29 @@ import unittest
 
 class TestSolution(unittest.TestCase):
 
+    dimensions = [3, 2]
+    your_position = [1, 1]
+    trainer_position = [2, 1]
+    distance = 4
+    plot_solution(dimensions, your_position, trainer_position, distance)
+
+    def test_gcd(self):
+        self.assertEqual(gcd(0, 0), 0)
+        self.assertEqual(gcd(0, 4), 4)
+        self.assertEqual(gcd(7, 0), 7)
+        self.assertEqual(gcd(4, 4), 4)
+        self.assertEqual(gcd(4, 6), 2)
+        self.assertEqual(gcd(6, 4), 2)
+        self.assertEqual(gcd(4, 7), 1)
+
+    def test_cartesian_to_polar(self):
+        self.assertEqual(cartesian_to_polar((6, 4)), (3, 2, 2))
+        self.assertEqual(cartesian_to_polar((-4, 6)), (-2, 3, 2))
+        self.assertEqual(cartesian_to_polar((4, -6)), (2, -3, 2))
+        self.assertEqual(cartesian_to_polar((-6, -4)), (-3, -2, 2))
+        self.assertEqual(cartesian_to_polar((0, 5)), (0, 1, 5))
+        self.assertEqual(cartesian_to_polar((-7, 0)), (-1, 0, 7))
+
     def test1(self):
         dimensions = [3, 2]
         your_position = [1, 1]
@@ -133,7 +162,6 @@ class TestSolution(unittest.TestCase):
         your_position = [150, 150]
         trainer_position = [185, 100]
         distance = 500
-        plot_solution(dimensions, your_position, trainer_position, distance)
         self.assertEqual(solution(dimensions, your_position, trainer_position, distance), 9)
 
 if __name__ == '__main__':
