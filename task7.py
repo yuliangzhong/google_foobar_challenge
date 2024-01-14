@@ -127,10 +127,11 @@ import unittest
 
 class TestSolution(unittest.TestCase):
 
-    dimensions = [3, 2]
-    your_position = [1, 1]
-    trainer_position = [2, 1]
-    distance = 4
+    dimensions = [10, 5]
+    your_position = [2, 2]
+    trainer_position = [8, 2]
+    distance = 20
+    print("solution is ", solution(dimensions, your_position, trainer_position, distance))
     plot_solution(dimensions, your_position, trainer_position, distance)
 
     def test_gcd(self):
@@ -150,19 +151,19 @@ class TestSolution(unittest.TestCase):
         self.assertEqual(cartesian_to_polar((0, 5)), (0, 1, 5))
         self.assertEqual(cartesian_to_polar((-7, 0)), (-1, 0, 7))
 
-    def test1(self):
-        dimensions = [3, 2]
-        your_position = [1, 1]
-        trainer_position = [2, 1]
-        distance = 4
-        self.assertEqual(solution(dimensions, your_position, trainer_position, distance), 7)
-    
-    def test2(self):
-        dimensions = [300, 275]
-        your_position = [150, 150]
-        trainer_position = [185, 100]
-        distance = 500
-        self.assertEqual(solution(dimensions, your_position, trainer_position, distance), 9)
+    def test_solutions(self):
+        self.assertEqual(solution([3, 2], [1, 1], [2, 1], 4), 7)
+        self.assertEqual(solution([300, 275], [150, 150], [185, 100], 500), 9)
+        self.assertEqual(solution([2, 5], [1, 2], [1, 4], 11), 27)
+        self.assertEqual(solution([23, 10], [6, 4], [3, 2], 23), 8)
+        self.assertEqual(solution([1250, 1250], [1000, 1000], [500, 400], 10000), 196)
+        self.assertEqual(solution([10, 10], [4, 4], [3, 3], 5000), 739323)
+        self.assertEqual(solution([3, 2], [1, 1], [2, 1], 7), 19)
+        self.assertEqual(solution([2, 3], [1, 1], [1, 2], 4), 7)
+        self.assertEqual(solution([3, 4], [1, 2], [2, 1], 7), 10)
+        self.assertEqual(solution([4, 4], [2, 2], [3, 1], 6), 7)
+        self.assertEqual(solution([300, 275], [150, 150], [180, 100], 500), 9)
+        self.assertEqual(solution([1000,1000], [250,25], [257,49], 25), 1)
 
 if __name__ == '__main__':
     unittest.main()
