@@ -46,8 +46,6 @@ def cartesian_to_polar(pos):
     return pos[0] // g, pos[1] // g, g
 
 def update_dict(dictionary, dx, dy):
-    if dx == 0 and dy == 0:
-        return
     rx, ry, g = cartesian_to_polar((dx, dy))
     dictionary[(rx, ry)] = min(g, dictionary.get((rx, ry), float("inf")))
 
@@ -56,19 +54,21 @@ def iterate_points_in_circle(dimensions, your_position, trainer_position, distan
     centers = []
     min_x, min_y = your_position[0] - distance - dimensions[0], your_position[1] - distance - dimensions[1]
     max_x, max_y = your_position[0] + distance + dimensions[0], your_position[1] + distance + dimensions[1]
-    for x in range(min_x, max_x + 1):
-        for y in range(min_y, max_y + 1):
-            if not (x % (2 * dimensions[0]) or y % (2 * dimensions[1])): # if (x, y) is the center of a pattern
-                centers.append((x, y))
-                for sign in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
-                    img_x, img_y = x + sign[0] * your_position[0], y + sign[1] * your_position[1]
-                    targ_x, targ_y = x + sign[0] * trainer_position[0], y + sign[1] * trainer_position[1]
-                    di_x, di_y = img_x - your_position[0], img_y - your_position[1]
-                    dt_x, dt_y = targ_x - your_position[0], targ_y - your_position[1]
-                    if (0 < di_x ** 2 + di_y ** 2 <= distance ** 2):
-                        update_dict(yimgs, di_x, di_y)
-                    if (0 < dt_x ** 2 + dt_y ** 2 <= distance ** 2):
-                        update_dict(targets, dt_x, dt_y)
+    min_x_id, min_y_id = min_x // (2 * dimensions[0]), min_y // (2 * dimensions[1])
+    max_x_id, max_y_id = max_x // (2 * dimensions[0]), max_y // (2 * dimensions[1])
+    for x_id in range(min_x_id + 1, max_x_id + 1):
+        for y_id in range(min_y_id + 1, max_y_id + 1):
+            x, y = x_id * (2 * dimensions[0]), y_id * (2 * dimensions[1])
+            centers.append((x, y))
+            for sign in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
+                img_x, img_y = x + sign[0] * your_position[0], y + sign[1] * your_position[1]
+                targ_x, targ_y = x + sign[0] * trainer_position[0], y + sign[1] * trainer_position[1]
+                di_x, di_y = img_x - your_position[0], img_y - your_position[1]
+                dt_x, dt_y = targ_x - your_position[0], targ_y - your_position[1]
+                if (0 < di_x ** 2 + di_y ** 2 <= distance ** 2):
+                    update_dict(yimgs, di_x, di_y)
+                if (0 < dt_x ** 2 + dt_y ** 2 <= distance ** 2):
+                    update_dict(targets, dt_x, dt_y)
     return targets, yimgs, centers
 
 def filtering(targets, yimgs, your_position):
@@ -127,11 +127,10 @@ import unittest
 
 class TestSolution(unittest.TestCase):
 
-    dimensions = [10, 5]
-    your_position = [2, 2]
-    trainer_position = [8, 2]
-    distance = 20
-    print("solution is ", solution(dimensions, your_position, trainer_position, distance))
+    dimensions = [3, 2]
+    your_position = [1, 1]
+    trainer_position = [2, 1]
+    distance = 6
     plot_solution(dimensions, your_position, trainer_position, distance)
 
     def test_gcd(self):
